@@ -6,6 +6,7 @@ import io.restassured.response.Response;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import java.util.Collections;
 import java.util.List;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.notNullValue;
@@ -37,8 +38,8 @@ public class CreateOrderTest {
     @DisplayName("Создание заказа с авторизацией и ингредиентами")
     @Description("Заказ с токеном и валидными ингредиентами должен быть успешным")
     public void createOrderWithAuthAndIngredientsReturnsSuccess() {
-        List<String> ingredients = ingredientIds.subList(0, 2);
-        Response response = orderClient.createOrderWithAuth(ingredients, accessToken);
+        Order order = new Order(ingredientIds.subList(0, 2));
+        Response response = orderClient.createOrderWithAuth(order, accessToken);
         response.then().statusCode(200).body("success", equalTo(true)).body("order", notNullValue());
     }
 
@@ -46,8 +47,8 @@ public class CreateOrderTest {
     @DisplayName("Создание заказа без авторизации")
     @Description("Заказ без токена авторизации")
     public void createOrderWithoutAuthReturnsSuccess() {
-        List<String> ingredients = ingredientIds.subList(0, 2);
-        Response response = orderClient.createOrderWithoutAuth(ingredients);
+        Order order = new Order(ingredientIds.subList(0, 2));
+        Response response = orderClient.createOrderWithoutAuth(order);
         response.then().statusCode(200).body("success", equalTo(true));
     }
 
@@ -55,7 +56,8 @@ public class CreateOrderTest {
     @DisplayName("Создание заказа без ингредиентов")
     @Description("Заказ без ингредиентов должен вернуть ошибку")
     public void createOrderWithoutIngredientsReturnsError() {
-        Response response = orderClient.createOrderWithBody("{\"ingredients\": []}", accessToken);
+        Order order = new Order(Collections.emptyList());
+        Response response = orderClient.createOrderWithAuth(order, accessToken);
         response.then().statusCode(400).body("success", equalTo(false)).body("message", equalTo("Ingredient ids must be provided"));
     }
 
@@ -63,7 +65,8 @@ public class CreateOrderTest {
     @DisplayName("Создание заказа с неверным хешем ингредиентов")
     @Description("Заказ с невалидным хешем должен вернуть ошибку 500")
     public void createOrderWithInvalidHashReturnsError() {
-        Response response = orderClient.createOrderWithBody("{\"ingredients\": [\"invalidhash123\"]}", accessToken);
+        Order order = new Order(List.of("invalidhash123"));
+        Response response = orderClient.createOrderWithAuth(order, accessToken);
         response.then().statusCode(500);
     }
 }
